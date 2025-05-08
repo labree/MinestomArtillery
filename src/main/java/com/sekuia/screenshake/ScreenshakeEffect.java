@@ -11,7 +11,7 @@ import java.util.Random;
 
 public class ScreenshakeEffect {
 	private final SchedulerManager schedulerManager;
-	private static final int SHAKE_DURATION_TICKS = 10;
+	private static final int SHAKE_DURATION_TICKS = 5;
 	private static final int SHAKE_STEPS = 20;
 	private static final float NOISE_SCALE = 0.1f;
 	private static final long STEP_DELAY_MS = 50;
@@ -30,7 +30,7 @@ public class ScreenshakeEffect {
 			schedulerManager.buildTask(() -> {
 				// Use step number to generate different noise values
 				float time = step * 0.1f; // Increment time based on step
-				
+
 				// Generate different noise values for yaw and pitch
 				float yawNoise = improvedNoise(time, 0) * intensity;
 				float pitchNoise = improvedNoise(time, 100) * intensity;

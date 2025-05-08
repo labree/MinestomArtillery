@@ -4,19 +4,8 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="88a6452c-8203-4a77-bf73-4b74858bb760" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/encodings.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/pom.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/sekuia/Main.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/sekuia/artillery/projectile/AbstractProjectile.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/sekuia/artillery/projectile/Projectile.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/sekuia/command/HitAnimationCommand.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/sekuia/command/ScreenshakeCommand.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/sekuia/screenshake/ScreenshakeEffect.java" afterDir="false" />
+    <list default="true" id="88a6452c-8203-4a77-bf73-4b74858bb760" name="Changes" comment="init">
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/sekuia/screenshake/ScreenshakeEffect.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/sekuia/screenshake/ScreenshakeEffect.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -52,4 +41,8 @@
   }
 }]]></component>
   <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="init" />
+    <option name="LAST_COMMIT_MESSAGE" value="init" />
+  </component>
 </project>
