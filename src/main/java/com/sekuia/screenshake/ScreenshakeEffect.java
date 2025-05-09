@@ -7,33 +7,57 @@ import net.minestom.server.network.packet.server.play.PlayerRotationPacket;
 import net.minestom.server.timer.SchedulerManager;
 import net.minestom.server.timer.TaskSchedule;
 
+import java.util.Map;
 import java.util.Random;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 public class ScreenshakeEffect {
+	public final Map<UUID, ScreenshakeState> activeShakes = new ConcurrentHashMap<>();
 	private final SchedulerManager schedulerManager;
-	private static final int SHAKE_DURATION_TICKS = 5;
-	private static final int SHAKE_STEPS = 20;
-	private static final float NOISE_SCALE = 0.1f;
-	private static final long STEP_DELAY_MS = 50;
+	private static final float MIN_STEPS = 1f;
+	private static final float MAX_STEPS = 50f;
 	private final Random random = new Random();
+	private final ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(1);
+
 
 	public ScreenshakeEffect() {
 		this.schedulerManager = MinecraftServer.getSchedulerManager();
 	}
 
-	public void shakeScreen(float intensity, Player player) {
+	public void shakeScreen(float duration, float intensity, Player player) {
+		ScreenshakeState screenshakeState = new ScreenshakeState(player, (long) (duration), intensity);
+		activeShakes.put(player.getUuid(),screenshakeState);
+		// Clamp intensity between 0.0 and 1.0 for step calculation
+		final float clampedIntensity = Math.max(0.0f, Math.min(1.0f, intensity));
+		
+		// Calculate steps and interval
+		int steps = calculateSteps(clampedIntensity);
+		long intervalMs = calculateInterval(duration, steps);
+		
 		Pos originalPos = player.getPosition();
 		
 		// Create multiple layers of Perlin noise for more natural movement
-		for (int i = 0; i < SHAKE_STEPS; i++) {
+		for (int i = 0; i < steps; i++) {
 			final int step = i;
 			schedulerManager.buildTask(() -> {
-				// Use step number to generate different noise values
-				float time = step * 0.1f; // Increment time based on step
-
-				// Generate different noise values for yaw and pitch
-				float yawNoise = improvedNoise(time, 0) * intensity;
-				float pitchNoise = improvedNoise(time, 100) * intensity;
+				// Use different time values for x and y to create varied movement
+				float timeX = step * 0.1f;
+				float timeY = step * 0.15f; // Different frequency for y-axis
+				
+				// Generate different noise values for yaw and pitch with different seeds
+				// Apply the movement multiplier to make the shake more noticeable
+				float yawNoise = improvedNoise(timeX, 0) * intensity;
+				float pitchNoise = improvedNoise(timeY, 100) * intensity;
+				
+				// Add some random variation to the direction
+				float randomFactor = 0.5f + random.nextFloat() * 0.5f; // Random factor between 0.5 and 1.0
+				yawNoise *= randomFactor;
+				pitchNoise *= (2.0f - randomFactor); // Inverse relationship to create more varied movement
 				
 				// Apply the noise to the original position
 				float newYaw = originalPos.yaw() + yawNoise;
@@ -41,7 +65,7 @@ public class ScreenshakeEffect {
 				
 				player.sendPacket(new PlayerRotationPacket(newYaw, newPitch));
 			})
-			.delay(TaskSchedule.millis(step * STEP_DELAY_MS))
+			.delay(TaskSchedule.millis(step * intervalMs))
 			.schedule();
 		}
 
@@ -49,8 +73,79 @@ public class ScreenshakeEffect {
 		schedulerManager.buildTask(() -> {
 			player.sendPacket(new PlayerRotationPacket(originalPos.yaw(), originalPos.pitch()));
 		})
-		.delay(TaskSchedule.millis(SHAKE_STEPS * STEP_DELAY_MS))
+		.delay(TaskSchedule.millis(steps * intervalMs))
 		.schedule();
+	}
+
+	public void executeScreenShake(Player player, float duration, float intensity) {
+		// Create and store shake for this current shake
+		ScreenshakeState screenshakeState = new ScreenshakeState(player, (long) duration, intensity);
+		activeShakes.put(player.getUuid(), screenshakeState);
+
+		// Clamp intensity between 0.0 and 1.0 for step calculation
+		final float clampedIntensity = Math.max(0.0f, Math.min(1.0f, intensity));
+
+		// Calculate steps and interval
+		int steps = calculateSteps(clampedIntensity);
+		long intervalMs = calculateInterval(duration, steps);
+
+		// Store the start time
+		final long startTime = System.currentTimeMillis();
+
+	    // Create the shake task
+		Runnable shakeTask = () -> {
+			// Check if we should stop the shake
+			if (System.currentTimeMillis() - startTime >= duration * 1000) {
+				// Return to original position
+				player.sendPacket(new PlayerRotationPacket(
+					screenshakeState.getBaseYaw(),
+					screenshakeState.getBasePitch()
+				));
+				// Remove from active shakes
+				activeShakes.remove(player.getUuid());
+				// Cancel the task
+				return;
+			}
+	
+			// Get current base position from the state
+			float baseYaw = screenshakeState.getBaseYaw();
+			float basePitch = screenshakeState.getBasePitch();
+			
+			// Calculate time-based noise
+			float timeX = (System.currentTimeMillis() - startTime) * 0.001f;
+			float timeY = timeX * 1.5f;
+			
+			// Generate noise values
+			float yawNoise = improvedNoise(timeX, 0) * intensity;
+			float pitchNoise = improvedNoise(timeY, 100) * intensity;
+			
+			// Add random variation
+			float randomFactor = 0.5f + random.nextFloat() * 0.5f;
+			yawNoise *= randomFactor;
+			pitchNoise *= (2.0f - randomFactor);
+			
+			// Apply to current base position
+			float newYaw = baseYaw + yawNoise;
+			float newPitch = basePitch + pitchNoise;
+			
+			// Send the packet
+			player.sendPacket(new PlayerRotationPacket(newYaw, newPitch));	
+		};
+
+		// Schedule the shake task
+		executor.scheduleAtFixedRate(shakeTask, 0, intervalMs, TimeUnit.MILLISECONDS);	
+	}
+
+	private int calculateSteps(float intensity) {
+		// Linear interpolation between MIN_STEPS and MAX_STEPS based on intensity
+		float steps = MIN_STEPS + (MAX_STEPS - MIN_STEPS) * intensity;
+		// Ensure at least 1 step and round to nearest integer
+		return Math.max(1, Math.round(steps));
+	}
+
+	private long calculateInterval(float duration, int steps) {
+		// Convert duration from seconds to milliseconds and divide by steps
+		return Math.round((duration * 1000) / steps);
 	}
 
 	// Improved noise function based on Ken Perlin's implementation

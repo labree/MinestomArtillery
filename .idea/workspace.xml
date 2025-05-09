@@ -5,6 +5,12 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="88a6452c-8203-4a77-bf73-4b74858bb760" name="Changes" comment="init">
+      <change afterPath="$PROJECT_DIR$/src/main/java/com/sekuia/event/PlayerPositionUpdateEvent.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/com/sekuia/screenshake/ScreenshakeState.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/sekuia/Main.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/sekuia/Main.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/sekuia/command/ScreenshakeCommand.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/sekuia/command/ScreenshakeCommand.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/com/sekuia/screenshake/ScreenshakeEffect.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/sekuia/screenshake/ScreenshakeEffect.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
