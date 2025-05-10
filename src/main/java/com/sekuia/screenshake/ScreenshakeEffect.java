@@ -11,8 +11,7 @@ import java.util.Map;
 import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
@@ -20,7 +19,7 @@ public class ScreenshakeEffect {
 	public final Map<UUID, ScreenshakeState> activeShakes = new ConcurrentHashMap<>();
 	private final SchedulerManager schedulerManager;
 	private static final float MIN_STEPS = 1f;
-	private static final float MAX_STEPS = 50f;
+	private static final float MAX_STEPS = 100f;
 	private final Random random = new Random();
 	private final ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(1);
 
@@ -96,20 +95,12 @@ public class ScreenshakeEffect {
 		Runnable shakeTask = () -> {
 			// Check if we should stop the shake
 			if (System.currentTimeMillis() - startTime >= duration * 1000) {
-				// Return to original position
-				player.sendPacket(new PlayerRotationPacket(
-					screenshakeState.getBaseYaw(),
-					screenshakeState.getBasePitch()
-				));
 				// Remove from active shakes
 				activeShakes.remove(player.getUuid());
 				// Cancel the task
+				screenshakeState.getTask().cancel(false);
 				return;
 			}
-	
-			// Get current base position from the state
-			float baseYaw = screenshakeState.getBaseYaw();
-			float basePitch = screenshakeState.getBasePitch();
 			
 			// Calculate time-based noise
 			float timeX = (System.currentTimeMillis() - startTime) * 0.001f;
@@ -123,17 +114,27 @@ public class ScreenshakeEffect {
 			float randomFactor = 0.5f + random.nextFloat() * 0.5f;
 			yawNoise *= randomFactor;
 			pitchNoise *= (2.0f - randomFactor);
-			
+
+			float baseYaw = screenshakeState.getBaseYaw();
+			float basePitch = screenshakeState.getBasePitch();
+
 			// Apply to current base position
 			float newYaw = baseYaw + yawNoise;
 			float newPitch = basePitch + pitchNoise;
+
+			// Save offsets from the base position
+			screenshakeState.setOffsetYaw(newYaw - baseYaw);
+			screenshakeState.setOffsetPitch(newPitch - basePitch);
+
+			// Save newYaw and newPitch to check when the event triggers
 			
 			// Send the packet
 			player.sendPacket(new PlayerRotationPacket(newYaw, newPitch));	
 		};
 
 		// Schedule the shake task
-		executor.scheduleAtFixedRate(shakeTask, 0, intervalMs, TimeUnit.MILLISECONDS);	
+		ScheduledFuture<?> task = executor.scheduleAtFixedRate(shakeTask, 0, intervalMs, TimeUnit.MILLISECONDS);
+		screenshakeState.setTask(task);
 	}
 
 	private int calculateSteps(float intensity) {
@@ -155,8 +156,8 @@ public class ScreenshakeEffect {
 		int Y = (int) Math.floor(y) & 255;
 		
 		// Get the fractional part
-		x -= Math.floor(x);
-		y -= Math.floor(y);
+		x -= (float) Math.floor(x);
+		y -= (float) Math.floor(y);
 		
 		// Compute fade curves
 		float u = fade(x);

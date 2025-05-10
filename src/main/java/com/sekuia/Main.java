@@ -35,12 +35,10 @@ public class Main {
 			player.setRespawnPoint(new Pos(0, 2, 0));
 		});
 
+		// register the handling of the PlayerMoveEvent
 		ScreenshakeEffect screenshakeEffect = new ScreenshakeEffect();
-		globalEventHandler.addListener(PlayerMoveEvent.class, event -> {
-			Player player = event.getPlayer();
-			PlayerPositionUpdateEvent positionUpdateEvent = new PlayerPositionUpdateEvent(screenshakeEffect, player);
-			positionUpdateEvent.updateBasePosition();
-		});
+		PlayerPositionUpdateEvent playerPositionUpdateEvent = new PlayerPositionUpdateEvent(screenshakeEffect);
+		playerPositionUpdateEvent.register(globalEventHandler);
 
 		MinecraftServer.getCommandManager().register(new ScreenshakeCommand());
 		MinecraftServer.getCommandManager().register(new HitAnimationCommand());
